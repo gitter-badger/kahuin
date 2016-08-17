@@ -36,7 +36,8 @@
   :doo {:build "test"
         :alias {:default [:firefox :chrome]}}
 
-  :profiles {:dev {:dependencies [[com.cemerick/piggieback "0.2.1"]
+  :profiles {:dev {:dependencies [[org.clojure/clojure "1.8.0"]
+                                  [com.cemerick/piggieback "0.2.1"]
                                   [figwheel-sidecar "0.5.4"]]
                    :plugins      [[lein-figwheel "0.5.4"]
                                   [lein-doo "0.1.7"]]

@@ -1,0 +1,13 @@
+dependencies:
+  pre:
+    - npm install karma karma-cljs-test karma-firefox-launcher karma-chrome-launcher --save-dev
+    - npm install -g karma-cli
+test:
+  override:
+    - lein doo firefox once
+    - lein doo chrome once
+deployment:
+  staging:
+    branch: master
+    heroku:
+      appname: kahuin
