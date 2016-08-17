@@ -4,6 +4,8 @@
 
 Anonymous gossip platform over a peer-to-peer network.
 
+[![CircleCI](https://circleci.com/gh/polymeris/kahuin.svg?style=svg)](https://circleci.com/gh/polymeris/kahuin)
+
 ## Development Mode
 
 ### Install npm dependencies:
