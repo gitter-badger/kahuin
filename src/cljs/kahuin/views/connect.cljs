@@ -35,4 +35,8 @@
        :name      :connect-upload
        :on-change upload-keys!}]
      [:label#connect-upload-label {:for :connect-upload}
-      "Upload a saved profile"]]))
+      "Upload a saved profile"]
+     [:div.divider]
+     [:a.connect-row {:href   "https://github.com/polymeris/kahuin"
+                      :target :_blank}
+      "Learn more about Kahuin on Github"]]))

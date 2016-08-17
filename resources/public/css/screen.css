@@ -407,7 +407,6 @@ main#connect-panel input#connect-upload {
 }
 
 main#connect-panel label#connect-upload-label {
-  float: right;
   color: #ffaa00;
   cursor: pointer;
   font-weight: bold;

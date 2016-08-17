@@ -109,7 +109,7 @@
              :right      0
              :border-top border}]
    [:div#status
-    {:margin (px 5)
+    {:margin     (px 5)
      :transition "ease-in-out, height .15s ease-in-out"}
     [:span {:float :left}]]
    [:#spinner
@@ -219,8 +219,8 @@
    {:margin-left  :auto
     :margin-right :auto
     :max-width    (px 400)}
-   [:.warning {:border "2px solid #bb0000"
-               :padding (px 6)
+   [:.warning {:border           "2px solid #bb0000"
+               :padding          (px 6)
                :background-color :#ffbbbb}]
    [:.connect-row
     {:display        :flex
@@ -229,9 +229,8 @@
     [:input :span {:flex-grow 1}]]
    [:a#connect-create (icon :confirm)]
    [:input#connect-upload {:display :none}]
-   [:label#connect-upload-label (icon :upload) {:float :right
-                                                :color accent
-                                                :cursor :pointer
+   [:label#connect-upload-label (icon :upload) {:color       accent
+                                                :cursor      :pointer
                                                 :font-weight :bold}]])
 
 (defstyles screen
