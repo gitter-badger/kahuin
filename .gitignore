@@ -1,0 +1,10 @@
+/*.log
+/target
+/*-init.clj
+/resources/public/js/compiled
+out
+/.idea
+/resources/node_modules
+.lein-repl-history
+.nrepl-port
+/*.iml
