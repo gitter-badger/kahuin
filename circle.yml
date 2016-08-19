@@ -4,10 +4,11 @@ dependencies:
     - npm install -g karma-cli
 test:
   override:
-    - lein doo firefox once
-    - lein doo chrome once
+    - case $CIRCLE_NODE_INDEX in 0) lein doo firefox once ;; 1) lein doo chrome once ;; esac:
+        parallel: true
 deployment:
   staging:
     branch: master
-    heroku:
-      appname: kahuin
+    commands:
+      - lein cljsbuild once min
+      - git push git@heroku.com:kahuin.git $CIRCLE_SHA1:master
