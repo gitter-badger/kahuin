@@ -21,8 +21,8 @@
   :main kahuin.core
 
   :clean-targets ^{:protect false} ["resources/public/js/compiled"
+                                    "out"
                                     "target"
-                                    "test/js"
                                     "resources/public/css"]
 
   :figwheel {:css-dirs   ["resources/public/css"]
@@ -50,23 +50,20 @@
         :root         "resources"}
 
   :cljsbuild {:builds
-              [{:id           "dev"
-                :source-paths ["src/cljs"]
-                :figwheel     {:on-jsload "kahuin.core/mount-root"}
-                :compiler     {:main                 kahuin.core
-                               :output-to            "resources/public/js/compiled/app.js"
-                               :output-dir           "resources/public/js/compiled/out"
-                               :asset-path           "js/compiled/out"
-                               :source-map-timestamp true}}
-               {:id           "min"
-                :source-paths ["src/cljs"]
-                :compiler     {:main            kahuin.core
-                               :output-to       "resources/public/js/compiled/app.js"
-                               :optimizations   :advanced
-                               :closure-defines {goog.DEBUG false}
-                               :pretty-print    false}}
-               {:id           "test"
-                :source-paths ["src/cljs" "test/cljs"]
-                :compiler     {:main          kahuin.runner
-                               :output-to     "resources/public/js/compiled/test.js"
-                               :optimizations :none}}]})
+              {:dev  {:source-paths ["src/cljs"]
+                      :figwheel     {:on-jsload "kahuin.core/mount-root"}
+                      :compiler     {:main                 kahuin.core
+                                     :output-to            "resources/public/js/compiled/app.js"
+                                     :output-dir           "resources/public/js/compiled/out"
+                                     :asset-path           "js/compiled/out"
+                                     :source-map-timestamp true}}
+               :min  {:source-paths ["src/cljs"]
+                      :compiler     {:main            kahuin.core
+                                     :output-to       "resources/public/js/compiled/app.js"
+                                     :optimizations   :advanced
+                                     :closure-defines {goog.DEBUG false}
+                                     :pretty-print    false}}
+               :test {:source-paths ["src/cljs" "test/cljs"]
+                      :compiler     {:main          kahuin.runner
+                                     :output-to     "out/testable.js"
+                                     :optimizations :none}}}})
