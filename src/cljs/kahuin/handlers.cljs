@@ -87,11 +87,17 @@
   :upload-keys
   default-middleware
   (fn [db [data]]
-    (let [new-state (cljs.reader/read-string data)]
+    (let [new-state (kdb/str-> data)]
       (-> (merge db
                  new-state
                  (peers/create-peer! (get-in new-state [:user :user-id])))
           (assoc-in [:pending :peer-connection] true)))))
+
+(register-handler
+  :keys-generated
+  default-middleware
+  (fn [db [kp]]
+    (assoc-in db [:user :keypair] kp)))
 
 (register-handler
   :log-out
@@ -104,7 +110,7 @@
   :add-subscription
   default-middleware
   (fn [db [id]]
-    (do (peers/connect! (:user db) id)
+    (do (peers/with-connection (:user db) id identity)
         (assoc-in db [:pending :add-subscription id] true))))
 
 (register-handler
@@ -149,11 +155,11 @@
   :send-message
   default-middleware
   (fn [db [target data]]
-    (ecc/sign-message! (:user db) {:data data :target-id (:id target)})
+    (ecc/sign-message! (:user db) {:data data :target-id target})
     db))
 
 (register-handler
-  :mesasage-signed
+  :message-signed
   default-middleware
   (fn [db [msg]]
     (peers/send! (:user db) (:target-id msg) (dissoc msg :target-id))
@@ -170,4 +176,5 @@
   :message-verified
   default-middleware
   (fn [db [msg]]
+    (print "recv" msg)
     (dht/parse-message db msg)))

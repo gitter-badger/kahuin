@@ -1,5 +1,13 @@
 (ns kahuin.network.encoding
-  (:require [goog.crypt.base64 :as b64]))
+  (:require [goog.crypt.base64 :as b64]
+            [cognitect.transit :as t]))
+
+
+(def reader (t/reader :json))
+(def writer (t/writer :json))
+
+(def transit-> (partial t/read reader))
+(def ->transit (partial t/write writer))
 
 (defn octets->base64
   [arr]

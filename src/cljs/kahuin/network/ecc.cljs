@@ -16,10 +16,10 @@
 (defn- on-export-keys
   [user f]
   (-> (js.crypto.subtle.exportKey "jwk" (.-publicKey (:keypair user)))
-      (.catch print)
+      (.catch (partial print "Public key export error: "))
       (.then (fn [public-key]
                (-> (js.crypto.subtle.exportKey "jwk" (.-privateKey (:keypair user)))
-                   (.catch print)
+                   (.catch (partial print "Private key export error: "))
                    (.then #(f (-> user
                                   (assoc :private-key (js->clj %))
                                   (assoc :public-key (js->clj public-key))
@@ -27,38 +27,41 @@
 
 (defn- on-import-keys
   [user f]
-  (-> (js.crypto.subtle.importKey "jwk" (:private-key user))
-      (.catch print)
+  (-> (js.crypto.subtle.importKey "jwk" (clj->js (:private-key user)) -settings false #js ["sign"])
+      (.catch (partial print "Private key import error: "))
       (.then (fn [private-key]
-               (-> (js.crypto.subtle.importKey "jwk" (:public-key user))
-                   (.catch print)
+               (-> (js.crypto.subtle.importKey "jwk" (clj->js (:public-key user)) -settings false #js ["verify"])
+                   (.catch (partial print "Public key import error: "))
                    (.then #(f (assoc user
                                 :keypair
                                 (clj->js {:publicKey % :privateKey private-key})))))))))
 
 (defn- on-import-msg-public-key
   [msg f]
-  (-> (js.crypto.subtle.importKey "jwk" (:public-key msg) -settings false #js ["verify"])
-      (.catch print)
+  (-> (js.crypto.subtle.importKey "jwk" (clj->js (:public-key msg)) -settings false #js ["verify"])
+      (.catch (partial print "Message key import error: "))
       (.then f)))
 
 (defn- on-generate-keys
   [f]
   (-> (js.crypto.subtle.generateKey -settings true #js ["sign" "verify"])
-      (.catch print)
+      (.catch (partial print "Key generation error: "))
       (.then #(on-export-keys {:keypair %} f))))
 
 (defn- on-sign
   [user data f]
-  (if (contains? :keypair user)
-    (-> (js.crypto.subtle.sign -settings
-                               (.-privateKey (:keypair user))
-                               (enc/string->buffer data))
-        (.catch print)
-        (.then #(f {:public-key (:public-key user)
-                    :data       data
-                    :signature  %})))
-    (on-import-keys user #(on-sign % data f))))
+  (let [g (fn [kp] (-> (js.crypto.subtle.sign -settings
+                                              (.-privateKey kp)
+                                              (enc/string->buffer data))
+                       (.catch (partial print "Message signing error: "))
+                       (.then #(f {:public-key (:public-key user)
+                                   :data       data
+                                   :signature  (enc/buffer->string %)}))))]
+    (if (:keypair user)
+      (g (:keypair user))
+      (on-import-keys user (fn [{kp :keypair}]
+                             (do (re-frame/dispatch [:keys-generated kp])
+                                 (g kp)))))))
 
 (defn- on-verify
   [source-id msg f]
@@ -67,9 +70,9 @@
     (fn [k]
       (if (= source-id (key->id k))
         (-> (js.crypto.subtle.verify -settings k
-                                     (:signature msg)
+                                     (enc/string->buffer (:signature msg))
                                      (enc/string->buffer (:data msg)))
-            (.catch print)
+            (.catch (partial print "Message verification error: "))
             (.then #(if % (f msg)
                           (print "Message verification failed"))))
         (print "Source ID does not match key")))))
