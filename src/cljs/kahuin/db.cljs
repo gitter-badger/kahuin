@@ -18,7 +18,7 @@
 (defn str->
   "Converts a transit encoded string from local storage or upload to a map."
   [s]
-  (try (enc/transit->)
+  (try (enc/transit-> s)
        (catch :default {})))
 
 (defn ->str
