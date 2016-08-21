@@ -10,5 +10,4 @@ deployment:
   staging:
     branch: master
     commands:
-      - lein cljsbuild once min
       - git push git@heroku.com:kahuin.git $CIRCLE_SHA1:master

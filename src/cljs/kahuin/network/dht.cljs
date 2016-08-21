@@ -1,8 +1,8 @@
 (ns kahuin.network.dht
   (:require [kahuin.network.encoding :refer [base64->octets]]
             [kahuin.network.ecc :refer [on-sign on-verify]]
-            [cljs.core.async :refer [put! chan <! >! timeout close!]]
-            [re-frame.core :as re-frame]))
+            [re-frame.core :as re-frame]
+            [cljs-time.core :as t]))
 
 (def *k* 20)
 
@@ -35,42 +35,52 @@
     (if (neg? b) nil
                  b)))
 
-;;; FIXME: WIP below
-
 (defn- send-msg!
   [target msg]
   (re-frame/dispatch [:send-message target msg]))
 
-(defn parse-message
-  [db msg]
-  (case (first (:data msg))
-    :ping (send-msg! (:source-id msg) [:pong])
-    :find nil
-    :store nil
-    :get nil
-    nil)
-  db)
-
-(defn- remove-node-from-bucket
-  [node b]
-  (remove #(= (:node-id b) (:node-id %)) node))
-
-(defn- add-node-to-bucket
-  [node b]
-  (cons node b))
-
-(defn- trim-bucket
-  [kad b]
-  (map #(do
-         (remove-node-from-bucket % b)
-         (send-msg! % [:ping]))
-       (take (- (count b) *k*)
-             (reverse b))))
+(defn trim-bucket
+  [b]
+  (->> (vals b)
+       (sort-by :last-seen)
+       (take (- (count b) *k*))
+       (map #(send-msg! % [:ping]))))
 
 (defn update-buckets
-  [kad node]
-  (when-let [bix (bucket-index (:node-id kad) (:node-id node))]
-    (->> (get (:buckets kad) bix)
-         (remove-node-from-bucket node)
-         (add-node-to-bucket node)
-         (trim-bucket kad))))
+  [db node-id]
+  (when-let [bix (bucket-index (get-in db :user :node-id) node-id)]
+    (update-in db [:dht :buckets bix]
+               #(trim-bucket (assoc % node-id {:node-id node-id :last-seen (t/now)})))))
+
+(defn nodes-in-bucket
+  [db ix]
+  (get-in db (:dht :buckets ix)))
+
+(defn nodes-in-buckets-closest-to
+  [db target]
+  (->> (get-in db [:dht :buckets])
+       (map vals)
+       (apply concat)
+       (sort-by #(bucket-index target (:node-id %)))))
+
+(defn closest-nodes
+  [db target]
+  (let [bix (bucket-index (get-in db :user :node-id) (:node-id target))
+        res (nodes-in-bucket db bix)
+        nodes-missing (- *k* (count res))]
+    (concat res (when (pos? nodes-missing)
+                  (take nodes-missing (nodes-in-buckets-closest-to db (:node-id target)))))))
+
+(defn parse-message
+  [db {data :data source-id :source-id}]
+  (update-buckets db source-id)
+  (case (first data)
+    :ping (send-msg! source-id [:pong])
+    :find (send-msg! source-id [:nodes (closest-nodes db (second data))])
+    :store (let [[k v] (rest data)] (assoc-in db [:dht :values k] v))
+    :get (send-msg! source-id (let [k (second data)
+                                    v (get-in db [:dht :values k])]
+                                (if v [:store k v]
+                                      [:nodes (closest-nodes db k)])))
+    nil)
+  db)

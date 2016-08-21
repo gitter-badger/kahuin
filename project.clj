@@ -1,5 +1,6 @@
 (defproject kahuin "0.1.0-SNAPSHOT"
-  :dependencies [[org.clojure/clojurescript "1.9.93"]
+  :dependencies [[org.clojure/clojure "1.8.0"]
+                 [org.clojure/clojurescript "1.9.93"]
                  [reagent "0.5.1"]
                  [binaryage/devtools "0.6.1"]
                  [re-frame "0.7.0"]
@@ -8,6 +9,7 @@
                  [prismatic/dommy "1.1.0"]
                  [com.andrewmcveigh/cljs-time "0.4.0"]
                  [com.cognitect/transit-cljs "0.8.239"]
+                 [bouncer "1.0.0"]
                  [clojure-humanize "0.2.0"]]
 
   :plugins [[lein-cljsbuild "1.1.3"]
@@ -36,18 +38,18 @@
   :doo {:build "test"
         :alias {:default [:firefox :chrome]}}
 
-  :profiles {:dev {:dependencies [[org.clojure/clojure "1.8.0"]
-                                  [com.cemerick/piggieback "0.2.1"]
-                                  [figwheel-sidecar "0.5.4"]]
-                   :plugins      [[lein-figwheel "0.5.4"]
-                                  [lein-doo "0.1.7"]]
-                   :source-paths ["dev"]}}
+  :profiles {:dev        {:dependencies [[com.cemerick/piggieback "0.2.1"]
+                                         [figwheel-sidecar "0.5.4"]]
+                          :plugins      [[lein-figwheel "0.5.4"]
+                                         [lein-doo "0.1.7"]]
+                          :source-paths ["dev"]}
+             :production {:prep-tasks   ["compile" ["cljsbuild" "once" "min"]]}}
 
   :repl-options {:nrepl-middleware [cemerick.piggieback/wrap-cljs-repl]}
 
   :npm {:dependencies [[peer "0.2.8"]
-                       [peerjs "0.3.14"]]
-        :root         "resources"}
+                       [peerjs "0.3.14"]
+                       [express "4.14.0"]]}
 
   :cljsbuild {:builds
               {:dev  {:source-paths ["src/cljs"]

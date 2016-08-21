@@ -4,6 +4,8 @@
 
 Anonymous gossip platform over a peer-to-peer network.
 
+[Demo](https://kahuin.herokuapp.com/)
+
 [![CircleCI](https://circleci.com/gh/polymeris/kahuin.svg?style=svg)](https://circleci.com/gh/polymeris/kahuin)
 
 ## How it works
