@@ -1,5 +1,6 @@
 (ns kahuin.views.profile
-  (:require [re-frame.core :as re-frame]
+  (:require [reagent.core :as r]
+            [re-frame.core :as re-frame]
             [dommy.core :refer-macros [sel1]]))
 
 (defn add-subscription []
@@ -18,7 +19,8 @@
 
 (defn profile-panel []
   (let [user (re-frame/subscribe [:user])
-        subs (re-frame/subscribe [:subscriptions])]
+        subs (re-frame/subscribe [:subscriptions])
+        logging-out (r/atom false)]
     (fn []
       [:main#profile-panel
        [:h2 "Your Profile"]
@@ -26,17 +28,20 @@
         [:div
          [:span
           "ID "
-          [:input#profile-id {:type     :text
-                              :value    (:node-id @user)
+          [:input#profile-id {:type      :text
+                              :value     (:node-id @user)
                               :read-only true
-                              :on-click #(.select (.-target %))}]]
+                              :on-click  #(.select (.-target %))}]]
          [:span "a.k.a. "]
          [:input#profile-nick {:type          :text
                                :placeholder   "Nickname"
                                :default-value (:nick @user)
                                :on-blur       #(re-frame/dispatch [:change-nick (.-value (sel1 :#profile-nick))])}]]]
        [:a#profile-download {:on-click #(re-frame/dispatch-sync [:download-keys])} "Download login credentials"]
-       [:a#profile-logout {:on-click #(re-frame/dispatch [:log-out])} "Log out"]
+       (if-not @logging-out
+         [:a#profile-logout {:on-click #(reset! logging-out true)} "Log out"]
+         [:span.profile-row "Are you sure you want to log out? You wont be able to log back in if you have not downloaded your credentials above."
+          [:a#profile-logout-yes {:on-click #(re-frame/dispatch [:log-out])} "Yes, log out."]])
        [:h2 "Subscriptions"]
        [:div#subscriptions.profile-row
         (if (not-empty @subs) (map subscription @subs)

@@ -39,7 +39,10 @@
   (.setItem js/localStorage lsk (->str db)))
 
 (def default-db
-  (merge {:user          nil
-          :kahuines      []
-          :subscriptions {}}
+  {:user          nil
+   :kahuines      []
+   :subscriptions {}})
+
+(def initial-db
+  (merge default-db
          (ls->)))

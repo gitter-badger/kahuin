@@ -16,7 +16,7 @@
   :initialize-db
   saving-middleware
   (fn [_ _]
-    (let [db kdb/default-db]
+    (let [db kdb/initial-db]
       (when (get-in db [:user :node-id])
         (dispatch [:connect-peer (:user db)]))
       db)))
@@ -102,7 +102,8 @@
 (register-handler
   :log-out
   saving-middleware
-  (fn [db []]))
+  (fn [_ []]
+    kdb/default-db))
 
 ;;; SUBS
 
