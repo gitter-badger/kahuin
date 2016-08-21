@@ -65,7 +65,8 @@
                                      :optimizations   :simple
                                      :closure-defines {goog.DEBUG                false
                                                        kahuin.network.peers/host ~(or (System/getenv "HOST") "localhost")
-                                                       kahuin.network.peers/port ~(or (System/getenv "PORT") "3450")}
+                                                       kahuin.network.peers/port "443"
+                                                       kahuin.network.peers/path "/p"}
                                      :language-out    :ecmascript5
                                      :pretty-print    false}}
                :test {:source-paths ["src/cljs" "test/cljs"]

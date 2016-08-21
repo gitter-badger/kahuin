@@ -5,6 +5,7 @@
 
 (goog-define host "0.peerjs.com")
 (goog-define port 9000)
+(goog-define path "/")
 
 (defn- id->peer-id
   "Replaces invalid characters in id to make it peerjs-compatible"
@@ -39,6 +40,7 @@
   (let [p (js/Peer. (id->peer-id id) #js {:key   "ndytcfc5opdmfgvi"
                                           :host  host
                                           :port  (js/parseInt port)
+                                          :path  path
                                           :debug (if config/debug? 3 0)})]
     (-> p
         (.on "connection" on-connect)

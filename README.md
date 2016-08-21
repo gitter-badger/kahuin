@@ -99,7 +99,11 @@ The above command assumes that you have the browsers, Karma and its plugins inst
 
     npm install karma-cljs-test karma-firefox-launcher karma-chrome-launcher --save-dev
 
-## Production Build
+## Production build
 
     lein clean
     lein cljsbuild once min
+    
+And run the server with:
+
+    node src/js/server.js 

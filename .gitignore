@@ -5,6 +5,7 @@
 out
 /.idea
 /resources/node_modules
+/node_modules
 .lein-repl-history
 .nrepl-port
 /*.iml
