@@ -62,7 +62,7 @@
                :min  {:source-paths ["src/cljs"]
                       :compiler     {:main            kahuin.core
                                      :output-to       "resources/public/js/compiled/app.js"
-                                     :optimizations   :advanced
+                                     :optimizations   :simple
                                      :closure-defines {goog.DEBUG false}
                                      :pretty-print    false}}
                :test {:source-paths ["src/cljs" "test/cljs"]

@@ -8,6 +8,7 @@
               [kahuin.views.core :as views]
               [kahuin.config :as config]))
 
+(enable-console-print!)
 
 (defn dev-setup []
   (when config/debug?

@@ -6,14 +6,15 @@
             [kahuin.network.dht :as dht]
             [cljs-time.core :as t]))
 
-(def save-middleware (re-frame/after kdb/->ls))
-(def debug-middleware [(when ^boolean js/goog.DEBUG re-frame/debug) re-frame/trim-v])
-(def default-middleware [save-middleware
-                         debug-middleware])
+(def debug-middleware [(when ^boolean js/goog.DEBUG re-frame/debug)
+                       re-frame/trim-v])
+(def saving-middleware [(re-frame/after kdb/->ls)
+                        (when ^boolean js/goog.DEBUG re-frame/debug)
+                        re-frame/trim-v])
 
 (register-handler
   :initialize-db
-  default-middleware
+  saving-middleware
   (fn [_ _]
     (let [db kdb/default-db]
       (when (get-in db [:user :node-id])
@@ -22,13 +23,13 @@
 
 (register-handler
   :set-active-panel
-  default-middleware
+  saving-middleware
   (fn [db [active-panel]]
     (assoc db :active-panel active-panel)))
 
 (register-handler
   :error
-  default-middleware
+  saving-middleware
   (fn [db [e m]]
     (case e
       :peer-connection (do (peers/reconnect! (:user db))
@@ -40,14 +41,14 @@
 
 (register-handler
   :create-user
-  default-middleware
+  saving-middleware
   (fn [db [nick]]
     (do (ecc/generate-keys! nick)
         (assoc-in db [:pending :user-creation] true))))
 
 (register-handler
   :connect-peer
-  default-middleware
+  saving-middleware
   (fn [db [user]]
     (-> db
         (assoc :user (merge user
@@ -56,19 +57,19 @@
 
 (register-handler
   :peer-connected
-  default-middleware
+  saving-middleware
   (fn [db [id brokering-id]]
     (print id " - " brokering-id)))
 
 (register-handler
   :change-nick
-  default-middleware
+  saving-middleware
   (fn [db [nick]]
     (assoc-in db [:user :nick] nick)))
 
 (register-handler
   :download-keys
-  default-middleware
+  saving-middleware
   (fn [db []]
     (do (let [encoded (->> (kdb/->str db)
                            (str "data:application/transit+json;charset=utf-8,")
@@ -84,7 +85,7 @@
 
 (register-handler
   :upload-keys
-  default-middleware
+  saving-middleware
   (fn [db [data]]
     (let [new-state (kdb/str-> data)]
       (-> (merge db
@@ -94,27 +95,27 @@
 
 (register-handler
   :keys-generated
-  default-middleware
+  saving-middleware
   (fn [db [kp]]
     (assoc-in db [:user :keypair] kp)))
 
 (register-handler
   :log-out
-  default-middleware
+  saving-middleware
   (fn [db []]))
 
 ;;; SUBS
 
 (register-handler
   :add-subscription
-  default-middleware
+  saving-middleware
   (fn [db [id]]
     (do (peers/with-connection (:user db) id identity)
         (assoc-in db [:pending :add-subscription id] true))))
 
 (register-handler
   :connection-opened
-  default-middleware
+  saving-middleware
   (fn [db [id conn]]
     (-> db
         (assoc-in [:user :connections id] conn)
@@ -123,57 +124,57 @@
 
 (register-handler
   :remove-subscription
-  default-middleware
+  saving-middleware
   (fn [db [id]]))
 
 ;;; Ks
 
 (register-handler
   :love-k
-  default-middleware
+  saving-middleware
   (fn [db [k]]))
 
 (register-handler
   :hide-k
-  default-middleware
+  saving-middleware
   (fn [db [k]]))
 
 (register-handler
   :load-reference
-  default-middleware
+  saving-middleware
   (fn [db [k]]))
 
 (register-handler
   :reply-to-k
-  default-middleware
+  saving-middleware
   (fn [db [k text]]))
 
 ;;; MESSAGES
 
 (register-handler
   :send-message
-  default-middleware
+  saving-middleware
   (fn [db [target data]]
     (ecc/sign-message! (:user db) {:data data :target-id target})
     db))
 
 (register-handler
   :message-signed
-  default-middleware
+  saving-middleware
   (fn [db [msg]]
     (peers/send! (:user db) (:target-id msg) (dissoc msg :target-id))
     db))
 
 (register-handler
   :message-received
-  default-middleware
+  saving-middleware
   (fn [db [id _ msg]]
     (ecc/verify-message! id msg)
     db))
 
 (register-handler
   :message-verified
-  default-middleware
+  saving-middleware
   (fn [db [msg]]
     (print "recv" msg)
     (dht/parse-message db msg)))
