@@ -7,10 +7,9 @@
             [cljs-time.core :as t]))
 
 (def save-middleware (re-frame/after kdb/->ls))
-(def debug-middleware (when ^boolean js/goog.DEBUG re-frame/debug))
+(def debug-middleware [(when ^boolean js/goog.DEBUG re-frame/debug) re-frame/trim-v])
 (def default-middleware [save-middleware
-                         debug-middleware
-                         re-frame/trim-v])
+                         debug-middleware])
 
 (register-handler
   :initialize-db

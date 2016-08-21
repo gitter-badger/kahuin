@@ -2,7 +2,8 @@
   (:require [cljs.test :refer-macros [deftest testing is async]]
             [re-frame.core :as re-frame :refer [register-handler]]
             [kahuin.network.ecc :as ecc]
-            [kahuin.handlers :refer [default-middleware]]))
+            [kahuin.handlers :refer [debug-middleware]]
+            [kahuin.network.encoding :as enc]))
 
 (def test-user
   {:private-key {"crv"     "P-256",
@@ -37,19 +38,16 @@
   (async done
     (register-handler
       :message-verified
-      default-middleware
+      debug-middleware
       (fn [_ [m]]
-        (print "BLAH" m)
-        (is (= 42 m))
+        (is (= (:data test-msg) (:data m)))
         (done)))
     (register-handler
       :message-signed
-      default-middleware
-      (fn [_ [m]]
-        (print "BHLU" m)
+      debug-middleware
+      (fn [db [m]]
         (is (= (:data test-msg) (:data m)))
         (is (= (:public-key test-user) (:public-key m)))
-        (ecc/verify-message! (:node-id test-user) m)
-        ;(done)
-        ))
+        (ecc/verify-message! (:node-id test-user) (enc/transit-> (enc/->transit m)))
+        db))
     (ecc/sign-message! test-user test-msg)))
