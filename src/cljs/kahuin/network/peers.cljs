@@ -3,8 +3,8 @@
             [kahuin.network.encoding :as enc]
             [kahuin.config :as config]))
 
-(goog-define peerjs-host "0.peerjs.com")
-(goog-define peerjs-port 9000)
+(goog-define host "0.peerjs.com")
+(goog-define port 9000)
 
 (defn- id->peer-id
   "Replaces invalid characters in id to make it peerjs-compatible"
@@ -37,8 +37,8 @@
   peerjs-port defines."
   [id]
   (let [p (js/Peer. (id->peer-id id) #js {:key   "ndytcfc5opdmfgvi"
-                                          :host  peerjs-host
-                                          :port  peerjs-port
+                                          :host  host
+                                          :port  (js/parseInt port)
                                           :debug (if config/debug? 3 0)})]
     (-> p
         (.on "connection" on-connect)

@@ -43,7 +43,7 @@
                           :plugins      [[lein-figwheel "0.5.4"]
                                          [lein-doo "0.1.7"]]
                           :source-paths ["dev"]}
-             :production {:prep-tasks   ["compile" ["cljsbuild" "once" "min"]]}}
+             :production {:prep-tasks ["compile" ["cljsbuild" "once" "min"]]}}
 
   :repl-options {:nrepl-middleware [cemerick.piggieback/wrap-cljs-repl]}
 
@@ -63,7 +63,10 @@
                       :compiler     {:main            kahuin.core
                                      :output-to       "resources/public/js/compiled/app.js"
                                      :optimizations   :simple
-                                     :closure-defines {goog.DEBUG false}
+                                     :closure-defines {goog.DEBUG                false
+                                                       kahuin.network.peers/host ~(or (System/getenv "HOST") "localhost")
+                                                       kahuin.network.peers/port ~(or (System/getenv "PORT") "3450")}
+                                     :language-out    :ecmascript5
                                      :pretty-print    false}}
                :test {:source-paths ["src/cljs" "test/cljs"]
                       :compiler     {:main          kahuin.runner
