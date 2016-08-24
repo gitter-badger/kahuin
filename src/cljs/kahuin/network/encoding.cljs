@@ -27,6 +27,14 @@
       (b64/decodeStringToByteArray)
       (seq)))
 
+(defn base64-43-chars?
+  [s]
+  (some? (re-matches #"[a-zA-Z0-9_\-]{43}" s)))
+
+(defn base64-27-chars?
+  [s]
+  (some? (re-matches #"[a-zA-Z0-9_\-]{27}" s)))
+
 (defn string->buffer
   [s]
   (-> (js/TextEncoder. "utf-8")

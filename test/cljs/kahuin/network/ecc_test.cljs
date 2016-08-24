@@ -2,7 +2,7 @@
   (:require [cljs.test :refer-macros [deftest testing is async]]
             [re-frame.core :as re-frame :refer [register-handler]]
             [kahuin.network.ecc :as ecc]
-            [kahuin.handlers :refer [debug-middleware]]
+            [kahuin.handlers :refer [non-saving]]
             [kahuin.network.encoding :as enc]))
 
 (def test-user
@@ -38,13 +38,13 @@
   (async done
     (register-handler
       :message-verified
-      debug-middleware
+      non-saving
       (fn [_ [m]]
         (is (= (:data test-msg) (:data m)))
         (done)))
     (register-handler
       :message-signed
-      debug-middleware
+      non-saving
       (fn [db [m]]
         (is (= (:data test-msg) (:data m)))
         (is (= (:public-key test-user) (:public-key m)))

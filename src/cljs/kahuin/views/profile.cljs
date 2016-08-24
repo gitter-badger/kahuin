@@ -1,7 +1,9 @@
 (ns kahuin.views.profile
   (:require [reagent.core :as r]
             [re-frame.core :as re-frame]
-            [dommy.core :refer-macros [sel1]]))
+            [dommy.core :refer-macros [sel1]]
+            [bouncer.core :as b]
+            [bouncer.validators :as v]))
 
 (defn add-subscription []
   (re-frame/dispatch [:add-subscription (.-value (sel1 :#subscription-id))]))
@@ -36,6 +38,7 @@
          [:input#profile-nick {:type          :text
                                :placeholder   "Nickname"
                                :default-value (:nick @user)
+                               :max-length    60
                                :on-blur       #(re-frame/dispatch [:change-nick (.-value (sel1 :#profile-nick))])}]]]
        [:a#profile-download {:on-click #(re-frame/dispatch-sync [:download-keys])} "Download login credentials"]
        (if-not @logging-out

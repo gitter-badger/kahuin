@@ -6,15 +6,24 @@
             [kahuin.network.dht :as dht]
             [cljs-time.core :as t]))
 
-(def debug-middleware [(when ^boolean js/goog.DEBUG re-frame/debug)
-                       re-frame/trim-v])
-(def saving-middleware [(re-frame/after kdb/->ls)
-                        (when ^boolean js/goog.DEBUG re-frame/debug)
-                        re-frame/trim-v])
+(def non-saving [(when ^boolean js/goog.DEBUG re-frame/debug)
+                 re-frame/trim-v])
+(def saving [(re-frame/after kdb/->ls)
+             (when ^boolean js/goog.DEBUG re-frame/debug)
+             re-frame/trim-v])
+
+(defn validating-handler
+  [validator-opts handler]
+  (fn [db v]
+    (handler (apply kdb/validate-db db validator-opts) v)))
+(def validating (partial validating-handler []))
+(def validating-keys-generated (partial validating-handler [:keys-generated]))
+(def validating-keys-imported (partial validating-handler [:keys-imported]))
+(def validating-keys (partial validating-handler [:keys-generated :keys-imported]))
 
 (register-handler
   :initialize-db
-  saving-middleware
+  [saving]
   (fn [_ _]
     (let [db kdb/initial-db]
       (when (get-in db [:user :node-id])
@@ -23,32 +32,34 @@
 
 (register-handler
   :set-active-panel
-  saving-middleware
+  non-saving
   (fn [db [active-panel]]
     (assoc db :active-panel active-panel)))
 
 (register-handler
   :error
-  saving-middleware
+  non-saving
   (fn [db [e m]]
     (case e
-      :peer-connection (do (peers/reconnect! (:user db))
-                           (assoc-in db [:pending :peer-connection] true))
-      (js/alert (str "Error" e " - " m)))))
+      :peer-connection (try (peers/reconnect! (:user db))
+                            (assoc-in db [:pending :peer-connection] true)
+                            (catch :default _ nil))
+      (js/alert (str "Error" e " - " m)))
+    db))
 
 
 ;;; USER
 
 (register-handler
   :create-user
-  saving-middleware
+  [validating-keys-generated saving]
   (fn [db [nick]]
     (do (ecc/generate-keys! nick)
         (assoc-in db [:pending :user-creation] true))))
 
 (register-handler
   :connect-peer
-  saving-middleware
+  [validating-keys non-saving]
   (fn [db [user]]
     (-> db
         (assoc :user (merge user
@@ -57,19 +68,19 @@
 
 (register-handler
   :peer-connected
-  saving-middleware
+  non-saving
   (fn [db [id brokering-id]]
     (print id " - " brokering-id)))
 
 (register-handler
   :change-nick
-  saving-middleware
+  [validating-keys saving]
   (fn [db [nick]]
     (assoc-in db [:user :nick] nick)))
 
 (register-handler
   :download-keys
-  saving-middleware
+  [validating-keys non-saving]
   (fn [db []]
     (do (let [encoded (->> (kdb/->str db)
                            (str "data:application/transit+json;charset=utf-8,")
@@ -85,7 +96,7 @@
 
 (register-handler
   :upload-keys
-  saving-middleware
+  [validating-keys-imported saving]
   (fn [db [data]]
     (let [new-state (kdb/str-> data)]
       (-> (merge db
@@ -95,13 +106,13 @@
 
 (register-handler
   :keys-generated
-  saving-middleware
+  [validating-keys saving]
   (fn [db [kp]]
     (assoc-in db [:user :keypair] kp)))
 
 (register-handler
   :log-out
-  saving-middleware
+  [validating saving]
   (fn [_ []]
     kdb/default-db))
 
@@ -109,14 +120,14 @@
 
 (register-handler
   :add-subscription
-  saving-middleware
+  [validating-keys saving]
   (fn [db [id]]
     (do (peers/with-connection (:user db) id identity)
         (assoc-in db [:pending :add-subscription id] true))))
 
 (register-handler
   :connection-opened
-  saving-middleware
+  [validating-keys saving]
   (fn [db [id conn]]
     (-> db
         (assoc-in [:user :connections id] conn)
@@ -125,57 +136,57 @@
 
 (register-handler
   :remove-subscription
-  saving-middleware
+  [validating-keys saving]
   (fn [db [id]]))
 
 ;;; Ks
 
 (register-handler
   :love-k
-  saving-middleware
+  [validating-keys saving]
   (fn [db [k]]))
 
 (register-handler
   :hide-k
-  saving-middleware
+  [validating-keys non-saving]
   (fn [db [k]]))
 
 (register-handler
   :load-reference
-  saving-middleware
+  [validating-keys non-saving]
   (fn [db [k]]))
 
 (register-handler
   :reply-to-k
-  saving-middleware
+  [validating-keys saving]
   (fn [db [k text]]))
 
 ;;; MESSAGES
 
 (register-handler
   :send-message
-  saving-middleware
+  [validating-keys non-saving]
   (fn [db [target data]]
     (ecc/sign-message! (:user db) {:data data :target-id target})
     db))
 
 (register-handler
   :message-signed
-  saving-middleware
+  [validating-keys non-saving]
   (fn [db [msg]]
     (peers/send! (:user db) (:target-id msg) (dissoc msg :target-id))
     db))
 
 (register-handler
   :message-received
-  saving-middleware
+  [validating-keys non-saving]
   (fn [db [id _ msg]]
     (ecc/verify-message! id msg)
     db))
 
 (register-handler
   :message-verified
-  saving-middleware
+  [validating-keys non-saving]
   (fn [db [msg]]
     (print "recv" msg)
     (dht/parse-message db msg)))

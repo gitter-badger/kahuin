@@ -6,6 +6,16 @@
                          :namedCurve "P-256"
                          :hash       {:name "SHA-256"}}))
 
+(defn- js-key?
+  [k]
+  (= (type k) js/CryptoKey))
+
+(defn keypair?
+  [kp]
+  (try (and (js-key? (.-publicKey kp))
+            (js-key? (.-privateKey kp)))
+       (catch :default _ false)))
+
 (defn- key->id
   [key]
   (->> (clj->js key)
